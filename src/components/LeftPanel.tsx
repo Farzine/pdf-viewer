@@ -39,6 +39,7 @@ const LeftPanel: React.FC = () => {
   // Refs for outside clicks
   const sidebarRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const thumbRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // For text selection popup
   const [showSelectionPopup, setShowSelectionPopup] = useState(false);
@@ -233,6 +234,20 @@ const LeftPanel: React.FC = () => {
     }
   }, [pageNumber]);
 
+
+  /**
+ * When sidebar opens OR pageNumber changes, scroll the active thumbnail into view.
+ */
+useEffect(() => {
+  if (showSidebar && thumbRefs.current[pageNumber - 1]) {
+    thumbRefs.current[pageNumber - 1]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
+}, [showSidebar, pageNumber]);
+
+
   return (
     <div className="relative flex flex-col w-full h-full border-r border-gray-200">
       {/* -- Top Toolbar -- */}
@@ -357,6 +372,10 @@ const LeftPanel: React.FC = () => {
                 return (
                   <div
                     key={pageIndex}
+                    ref={(el) => {
+                      // Assign a ref to each thumbnail container
+                      if (el) thumbRefs.current[i] = el;
+                    }}
                     onClick={() => setPageNumber(pageIndex)}
                     className={`p-2 px-5 border-b cursor-pointer ${
                       isActive ? "bg-gray-200" : "hover:bg-gray-100"
