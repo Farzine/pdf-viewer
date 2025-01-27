@@ -17,36 +17,36 @@ import {
 import { FaBars } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import { pdfjs, Document, Page } from "react-pdf";
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+import { PDFDocument, rgb, degrees, StandardFonts } from "pdf-lib";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
   import.meta.url
 ).toString();
 
-
 type TabMode = "pdf" | "summary";
 
 /* For storing highlight overlays */
 interface HighlightOverlay {
   id: number;
-  page: number; 
-  color: string; 
-  top: number; 
+  page: number;
+  color: string;
+  top: number;
   left: number;
   width: number;
   height: number;
-  text: string; 
+  text: string;
 }
 
 /* For storing text boxes placed on the PDF */
 interface TextBoxOverlay {
   id: number;
-  page: number; 
-  x: number; 
+  page: number;
+  x: number;
   y: number;
-  content: string; 
+  content: string;
 }
 
 /* For a floating input (temporary) when user clicks in "Add Text" mode */
@@ -88,12 +88,10 @@ interface IHighlight {
 }
 
 const LeftPanel: React.FC = () => {
-
   // PDF states
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
-
 
   // UI states
   const [showSidebar, setShowSidebar] = useState(false);
@@ -101,11 +99,10 @@ const LeftPanel: React.FC = () => {
   const [zoom, setZoom] = useState(1.6);
   const [showSearch, setShowSearch] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-
+  const [rotation, setRotation] = useState<number>(0);
 
   // Tabs
   const [activeTab, setActiveTab] = useState<TabMode>("pdf");
-
 
   // Refs
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -113,11 +110,9 @@ const LeftPanel: React.FC = () => {
   const thumbRefs = useRef<(HTMLDivElement | null)[]>([]);
   const pageDivRefs = useRef<HTMLDivElement[]>([]);
 
-
   // Overlays for highlighting and text
   const [highlights, setHighlights] = useState<HighlightOverlay[]>([]);
   const [textBoxes, setTextBoxes] = useState<TextBoxOverlay[]>([]);
-
 
   // States for "Add Text" or "Erase" modes
   const [isAddingText, setIsAddingText] = useState(false);
@@ -133,7 +128,6 @@ const LeftPanel: React.FC = () => {
   });
   const tempInputRef = useRef<HTMLInputElement>(null);
 
-
   // Text selection popup
   const [showSelectionPopup, setShowSelectionPopup] = useState(false);
   const [selectionText, setSelectionText] = useState("");
@@ -141,7 +135,6 @@ const LeftPanel: React.FC = () => {
   const [popupY, setPopupY] = useState(0);
   const [showHighlightColors, setShowHighlightColors] = useState(false);
 
- 
   // PDF Upload
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -160,12 +153,10 @@ const LeftPanel: React.FC = () => {
     setNumPages(pdf.numPages);
   };
 
-
-   // Toggle the page-list sidebar 
+  // Toggle the page-list sidebar
   const toggleSidebar = () => setShowSidebar((prev) => !prev);
 
-
-   // Page navigation 
+  // Page navigation
   const handlePageUp = () => {
     setPageNumber((prev) => (prev > 1 ? prev - 1 : prev));
   };
@@ -179,18 +170,27 @@ const LeftPanel: React.FC = () => {
     }
   };
 
-  //Zoom in/out 
+  //Zoom in/out
   const handleZoomIn = () => setZoom((prev) => prev + 0.1);
   const handleZoomOut = () =>
     setZoom((prev) => (prev > 0.2 ? prev - 0.1 : prev));
 
-  //3-dot menu 
+  //3-dot menu
   const toggleMenu = () => setShowMenu((prev) => !prev);
 
-  //Search bar 
+  // Rotation of pdf
+  const rotateClockwise = () => {
+    setRotation((prev) => (prev + 90) % 360);
+  };
+
+  const rotateAnticlockwise = () => {
+    setRotation((prev) => (prev - 90 + 360) % 360);
+  };
+
+  //Search bar
   const toggleSearch = () => setShowSearch((prev) => !prev);
 
-  //Close sidebar on outside click 
+  //Close sidebar on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -229,7 +229,6 @@ const LeftPanel: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showSearch]);
-
 
   // Text Selection
   const popupRef = useRef<HTMLDivElement>(null);
@@ -289,7 +288,7 @@ const LeftPanel: React.FC = () => {
     };
   }, [showSelectionPopup]);
 
-  /** 
+  /**
    * IntersectionObserver for main PDF
    */
   useEffect(() => {
@@ -326,7 +325,7 @@ const LeftPanel: React.FC = () => {
     };
   }, [pdfUrl, numPages]);
 
-  /** 
+  /**
    * Whenever pageNumber changes, scroll that page into view
    */
   useEffect(() => {
@@ -337,7 +336,7 @@ const LeftPanel: React.FC = () => {
     }
   }, [pageNumber, pdfUrl, numPages]);
 
-  /** 
+  /**
    * Auto-scroll sidebar thumbnail
    */
   useEffect(() => {
@@ -349,7 +348,7 @@ const LeftPanel: React.FC = () => {
     }
   }, [showSidebar, pageNumber]);
 
-  /** 
+  /**
    * Cleanup object URL
    */
   useEffect(() => {
@@ -358,15 +357,11 @@ const LeftPanel: React.FC = () => {
     };
   }, [pdfUrl]);
 
-  // =============================
   // Tab switching
-  // =============================
   const switchToPdf = () => setActiveTab("pdf");
   const switchToSummary = () => setActiveTab("summary");
 
-  // =============================
   // Text selection popup actions
-  // =============================
   const handleExplainText = () => {
     console.log("Explain text:", selectionText);
     setShowSelectionPopup(false);
@@ -456,9 +451,7 @@ const LeftPanel: React.FC = () => {
     selection.removeAllRanges();
   };
 
-  // =============================
   // Add Text & Floating Input
-  // =============================
   const toggleAddTextMode = () => {
     setIsAddingText((prev) => !prev);
     setIsErasing(false);
@@ -467,9 +460,7 @@ const LeftPanel: React.FC = () => {
     setTempTextInput({ page: 0, x: 0, y: 0, value: "", show: false });
   };
 
-  /** 
-   * If user clicks on PDF page while isAddingText = true => show input box 
-   */
+  //If user clicks on PDF page while isAddingText = true => show input box
   const handlePageClickForText = (
     e: React.MouseEvent<HTMLDivElement>,
     pageIndex: number
@@ -497,7 +488,7 @@ const LeftPanel: React.FC = () => {
     }, 50);
   };
 
-  /** 
+  /**
    * Clicking outside the input or pressing Enter finalizes
    */
   const finalizeTempInput = () => {
@@ -540,9 +531,7 @@ const LeftPanel: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tempTextInput.show]);
 
-  // =============================
   // Eraser Mode
-  // =============================
   const toggleEraserMode = () => {
     setIsErasing((prev) => !prev);
     setIsAddingText(false);
@@ -551,7 +540,7 @@ const LeftPanel: React.FC = () => {
     setTempTextInput({ page: 0, x: 0, y: 0, value: "", show: false });
   };
 
-  /** 
+  /**
    * If user clicks a highlight or text box while erasing => remove that overlay
    */
   const handleHighlightClickErase = (id: number) => {
@@ -564,33 +553,157 @@ const LeftPanel: React.FC = () => {
     setTextBoxes((prev) => prev.filter((tb) => tb.id !== id));
   };
 
-  // =============================
-  // Render
-  // =============================
+  // Color mapping for highlights
+  const colorMap: { [key: string]: { r: number; g: number; b: number } } = {
+    yellow: { r: 1, g: 1, b: 0 },
+    green: { r: 0, g: 1, b: 0 },
+    pink: { r: 1, g: 0.6, b: 0.8 },
+    blue: { r: 0, g: 0, b: 1 },
+    red: { r: 1, g: 0, b: 0 },
+    "rgb(255,200,0)": { r: 255 / 255, g: 200 / 255, b: 0 / 255 },
+  };
+
+  const handleDownload = async () => {
+    if (!pdfFile) {
+      alert("No PDF file to download.");
+      return;
+    }
+
+    try {
+      const existingPdfBytes = await pdfFile.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(existingPdfBytes);
+      const font = await pdfDoc.embedStandardFont(StandardFonts.Helvetica);
+
+      // Process highlights
+      highlights.forEach((highlight) => {
+        const page = pdfDoc.getPage(highlight.page - 1);
+        const { width, height } = page.getSize();
+        let { left, top, width: w, height: h } = highlight;
+
+        // Convert color
+        const color = colorMap[highlight.color] || { r: 1, g: 1, b: 0 };
+
+        // Adjust coordinates based on rotation
+        let x, y;
+        switch (rotation) {
+          case 90:
+            x = height - top - h;
+            y = left;
+            [w, h] = [h, w]; // Swap dimensions
+            break;
+          case 180:
+            x = width - left - w;
+            y = height - top - h;
+            break;
+          case 270:
+            x = top;
+            y = width - left - w;
+            [w, h] = [h, w]; // Swap dimensions
+            break;
+          default: // 0 degrees
+            x = left;
+            y = height - top - h;
+        }
+
+        page.drawRectangle({
+          x,
+          y,
+          width: w,
+          height: h,
+          color: rgb(color.r, color.g, color.b),
+          opacity: 0.5,
+        });
+      });
+
+      // Process text boxes
+      textBoxes.forEach((box) => {
+        const page = pdfDoc.getPage(box.page - 1);
+        const { width, height } = page.getSize();
+        let { x, y } = box;
+
+        // Adjust coordinates based on rotation
+        switch (rotation) {
+          case 90:
+            [x, y] = [height - y, x];
+            break;
+          case 180:
+            [x, y] = [width - x, height - y];
+            break;
+          case 270:
+            [x, y] = [y, width - x];
+            break;
+          default:
+            y = height - y;
+        }
+
+        page.drawText(box.content, {
+          x,
+          y,
+          size: 12,
+          font,
+          color: rgb(0, 0, 0), // Default black text
+        });
+      });
+
+      // Apply rotation to all pages
+      pdfDoc.getPages().forEach((page) => {
+        page.setRotation(degrees(rotation));
+      });
+
+      // Trigger download
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = "annotated.pdf";
+      link.click();
+      window.URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error("Error during PDF download:", error);
+      alert("An error occurred while downloading the PDF.");
+    }
+  };
+
   return (
     <div className="relative flex flex-col w-full h-full border-r border-gray-200 pdf-container">
       {/* -- Tab Buttons at top */}
-      <div className="flex space-x-4 border-b bg-white px-3 py-1 items-center">
-        <button
-          className={`text-sm font-medium px-2 py-1 ${
-            activeTab === "pdf"
-              ? "border-b-2 border-orange-500 text-orange-600"
-              : "text-gray-600"
-          }`}
-          onClick={switchToPdf}
-        >
-          PDF file
-        </button>
-        <button
-          className={`text-sm font-medium px-2 py-1 ${
-            activeTab === "summary"
-              ? "border-b-2 border-orange-500 text-orange-600"
-              : "text-gray-600"
-          }`}
-          onClick={switchToSummary}
-        >
-          Summary
-        </button>
+      <div className="flex justify-between space-x-4 border-b bg-white px-3 py-1 items-center">
+        <div className="">
+          <button
+            className={`text-sm font-medium px-4 py-1 ${
+              activeTab === "pdf"
+                ? "border-b-2 border-orange-500 text-orange-600"
+                : "text-gray-600"
+            }`}
+            onClick={switchToPdf}
+          >
+            PDF file
+          </button>
+          <button
+            className={`text-sm font-medium px-4 py-1 ${
+              activeTab === "summary"
+                ? "border-b-2 border-orange-500 text-orange-600"
+                : "text-gray-600"
+            }`}
+            onClick={switchToSummary}
+          >
+            Summary
+          </button>
+        </div>
+        {pdfUrl ? (
+          <label className="flex items-end justify-end space-x-2 px-3 py-2 bg-gray-200 text-gray-600 rounded cursor-pointer">
+            <BsUpload className="w-5 h-5" />
+            <span>Upload PDF</span>
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handlePdfUpload}
+            />
+          </label>
+        ) : (
+          <></>
+        )}
       </div>
 
       {activeTab === "pdf" ? (
@@ -713,14 +826,35 @@ const LeftPanel: React.FC = () => {
                 </button>
                 {showMenu && (
                   <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg text-sm z-50">
-                    <button className="block w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center space-x-2">
+                    <button
+                      onClick={handleDownload}
+                      className=" w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center space-x-2"
+                    >
                       <BsDownload />
                       <span>Download</span>
                     </button>
-                    <button className="block w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center space-x-2">
-                      <BsArrowClockwise />
-                      <span>Rotate</span>
-                    </button>
+                    <div className="relative group">
+                      <button className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center space-x-2">
+                        <BsChevronRight className="w-4 h-4" />
+                        <span>Rotate</span>
+                      </button>
+                      <div className="absolute right-0 top-0 mt-0 ml-6 w-32 bg-white border border-gray-200 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 text-xs">
+                        <button
+                          onClick={rotateClockwise}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center space-x-2"
+                        >
+                          <BsArrowClockwise />
+                          <span>Clockwise</span>
+                        </button>
+                        <button
+                          onClick={rotateAnticlockwise}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center space-x-2"
+                        >
+                          <BsArrowClockwise className="transform -rotate-90" />
+                          <span>Anticlockwise</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -823,6 +957,7 @@ const LeftPanel: React.FC = () => {
                       <Page
                         pageNumber={pg}
                         scale={zoom}
+                        rotate={rotation}
                         renderTextLayer={true}
                         renderAnnotationLayer={false}
 
@@ -839,7 +974,9 @@ const LeftPanel: React.FC = () => {
                           <div
                             key={h.id}
                             className={`absolute opacity-70 z-20 ${
-                              isErasing ? "cursor-pointer" : "pointer-events-none"
+                              isErasing
+                                ? "cursor-pointer"
+                                : "pointer-events-none"
                             }`}
                             style={{
                               top: h.top,
@@ -1000,11 +1137,11 @@ const LeftPanel: React.FC = () => {
             (Imagine an AI model summarized the entire PDF here.)
           </p>
           <p className="text-sm text-gray-700 mt-2">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Praesent vel lorem vitae ligula faucibus blandit. In luctus, neque
-            eget commodo dictum, quam arcu fermentum est, vel malesuada sapien
-            elit sed purus. Pellentesque habitant morbi tristique senectus et
-            netus et malesuada fames ac turpis egestas.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
+            vel lorem vitae ligula faucibus blandit. In luctus, neque eget
+            commodo dictum, quam arcu fermentum est, vel malesuada sapien elit
+            sed purus. Pellentesque habitant morbi tristique senectus et netus
+            et malesuada fames ac turpis egestas.
           </p>
         </div>
       )}
