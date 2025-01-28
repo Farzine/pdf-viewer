@@ -19,7 +19,7 @@ import { IoMdClose } from "react-icons/io";
 import { pdfjs, Document, Page } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { PDFDocument, rgb, degrees, StandardFonts } from "pdf-lib";
+import { PDFDocument, degrees } from "pdf-lib";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
@@ -58,34 +58,6 @@ interface TempTextInput {
   show: boolean;
 }
 
-interface IHighlight {
-  content: {
-    text?: string;
-    image?: string;
-  };
-  position: {
-    boundingRect: {
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      width: number;
-      height: number;
-      pageNumber: number;
-    };
-    rects: Array<{
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      width: number;
-      height: number;
-    }>;
-    pageNumber: number;
-  };
-  comment?: string;
-  id: string;
-}
 
 const LeftPanel: React.FC = () => {
   // PDF states
@@ -149,7 +121,7 @@ const LeftPanel: React.FC = () => {
   };
 
   //Called when the PDF loads successfully
-  const onDocumentLoadSuccess = (pdf: any) => {
+  const onDocumentLoadSuccess = (pdf: pdfjs.PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
   };
 
@@ -233,7 +205,7 @@ const LeftPanel: React.FC = () => {
   // Text Selection
   const popupRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handleMouseUp = (e: MouseEvent) => {
+    const handleMouseUp = () => {
       // If we're adding text or erasing, skip text selection
       if (isAddingText || isErasing) return;
 
@@ -301,6 +273,7 @@ const LeftPanel: React.FC = () => {
             const index = pageDivRefs.current.findIndex(
               (div) => div === entry.target
             );
+
             if (index >= 0) {
               setPageNumber(index + 1);
             }
@@ -314,12 +287,13 @@ const LeftPanel: React.FC = () => {
       }
     );
 
-    pageDivRefs.current.forEach((div) => {
+    const currentPageDivRefs = pageDivRefs.current;
+    currentPageDivRefs.forEach((div) => {
       if (div) observer.observe(div);
     });
 
     return () => {
-      pageDivRefs.current.forEach((div) => {
+      currentPageDivRefs.forEach((div) => {
         if (div) observer.unobserve(div);
       });
     };
@@ -553,15 +527,6 @@ const LeftPanel: React.FC = () => {
     setTextBoxes((prev) => prev.filter((tb) => tb.id !== id));
   };
 
-  // Color mapping for highlights
-  const colorMap: { [key: string]: { r: number; g: number; b: number } } = {
-    yellow: { r: 1, g: 1, b: 0 },
-    green: { r: 0, g: 1, b: 0 },
-    pink: { r: 1, g: 0.6, b: 0.8 },
-    blue: { r: 0, g: 0, b: 1 },
-    red: { r: 1, g: 0, b: 0 },
-    "rgb(255,200,0)": { r: 255 / 255, g: 200 / 255, b: 0 / 255 },
-  };
 
   const handleDownload = async () => {
     if (!pdfFile) {
@@ -572,78 +537,7 @@ const LeftPanel: React.FC = () => {
     try {
       const existingPdfBytes = await pdfFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
-      const font = await pdfDoc.embedStandardFont(StandardFonts.Helvetica);
 
-      // Process highlights
-      highlights.forEach((highlight) => {
-        const page = pdfDoc.getPage(highlight.page - 1);
-        const { width, height } = page.getSize();
-        let { left, top, width: w, height: h } = highlight;
-
-        // Convert color
-        const color = colorMap[highlight.color] || { r: 1, g: 1, b: 0 };
-
-        // Adjust coordinates based on rotation
-        let x, y;
-        switch (rotation) {
-          case 90:
-            x = height - top - h;
-            y = left;
-            [w, h] = [h, w]; // Swap dimensions
-            break;
-          case 180:
-            x = width - left - w;
-            y = height - top - h;
-            break;
-          case 270:
-            x = top;
-            y = width - left - w;
-            [w, h] = [h, w]; // Swap dimensions
-            break;
-          default: // 0 degrees
-            x = left;
-            y = height - top - h;
-        }
-
-        page.drawRectangle({
-          x,
-          y,
-          width: w,
-          height: h,
-          color: rgb(color.r, color.g, color.b),
-          opacity: 0.5,
-        });
-      });
-
-      // Process text boxes
-      textBoxes.forEach((box) => {
-        const page = pdfDoc.getPage(box.page - 1);
-        const { width, height } = page.getSize();
-        let { x, y } = box;
-
-        // Adjust coordinates based on rotation
-        switch (rotation) {
-          case 90:
-            [x, y] = [height - y, x];
-            break;
-          case 180:
-            [x, y] = [width - x, height - y];
-            break;
-          case 270:
-            [x, y] = [y, width - x];
-            break;
-          default:
-            y = height - y;
-        }
-
-        page.drawText(box.content, {
-          x,
-          y,
-          size: 12,
-          font,
-          color: rgb(0, 0, 0), // Default black text
-        });
-      });
 
       // Apply rotation to all pages
       pdfDoc.getPages().forEach((page) => {

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { AiOutlineGlobal } from "react-icons/ai";
 import { FiMessageSquare, FiSend } from "react-icons/fi";
 import html2canvas from "html2canvas";
+import Image from "next/image";
 
 interface ChatMessage {
   id: number;
@@ -457,9 +458,11 @@ const ChatWidget: React.FC = () => {
                       {message.content}
                     </div>
                   )}
-                  <img
+                  <Image
                     src={message.image}
                     alt="snipped formula"
+                    width={400}
+                    height={320}
                     className="max-w-full max-h-80 rounded"
                   />
                 </>
@@ -620,9 +623,11 @@ const ChatWidget: React.FC = () => {
           <div className="bg-white p-4 rounded shadow-md max-w-md w-full">
             <h2 className="text-lg font-bold mb-2">Add a prompt about your snip</h2>
             {pendingSnip && (
-              <img
+              <Image
                 src={pendingSnip}
                 alt="Snipped preview"
+                width={400}
+                height={160}
                 className="max-w-full max-h-40 mb-2 border"
               />
             )}
