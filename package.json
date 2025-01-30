@@ -12,6 +12,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^6.4.1",
+    "@pdftron/webviewer": "^11.2.0",
     "@shadcn/ui": "^0.0.4",
     "@tabler/icons-react": "^3.22.0",
     "@types/html2canvas": "^0.5.35",

@@ -1,6 +1,7 @@
 "use client";
 import ChatWidget from "@/components/ChatWidget";
 import LeftPanel from "@/components/LeftPanel";
+import PDFViewer from "./webviewer/page";
 import { FC, useState } from "react";
 
 const HomePage: FC = () => {
